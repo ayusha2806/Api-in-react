@@ -1,23 +1,13 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import MoviesList from './components/MoviesList';
+import AddMovie from './components/AddMovie';
 import './App.css';
 
 function App() {
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [retryCount, setRetryCount] = useState(0);
-
-  const retryFetch = useCallback(() => {
-    const retryInterval = setInterval(() => {
-      setRetryCount((prevRetryCount) => prevRetryCount + 1);
-    }, 5000);
-
-    return () => {
-      clearInterval(retryInterval);
-    };
-  }, []);
 
   const fetchMoviesHandler = useCallback(async () => {
     setIsLoading(true);
@@ -25,8 +15,9 @@ function App() {
     try {
       const response = await fetch('https://swapi.dev/api/films/');
       if (!response.ok) {
-        throw new Error('Something went wrong...Retrying');
+        throw new Error('Something went wrong!');
       }
+
       const data = await response.json();
 
       const transformedMovies = data.results.map((movieData) => {
@@ -38,22 +29,19 @@ function App() {
         };
       });
       setMovies(transformedMovies);
-      setIsLoading(false);
     } catch (error) {
       setError(error.message);
-      retryFetch();
     }
     setIsLoading(false);
-  }, [retryFetch]);
+  }, []);
 
   useEffect(() => {
     fetchMoviesHandler();
-  }, [fetchMoviesHandler, retryCount]);
+  }, [fetchMoviesHandler]);
 
-  const cancelRetryHandler = useCallback(() => {
-    setRetryCount(0);
-  }, []);
-
+  function addMovieHandler(movie) {
+    console.log(movie);
+  }
 
   let content = <p>Found no movies.</p>;
 
@@ -62,12 +50,7 @@ function App() {
   }
 
   if (error) {
-    content = (
-      <div>
-        <p>{error}</p>
-        <button onClick={cancelRetryHandler}>Cancel Retry</button>
-      </div>
-    );
+    content = <p>{error}</p>;
   }
 
   if (isLoading) {
@@ -76,6 +59,9 @@ function App() {
 
   return (
     <React.Fragment>
+      <section>
+        <AddMovie onAddMovie={addMovieHandler} />
+      </section>
       <section>
         <button onClick={fetchMoviesHandler}>Fetch Movies</button>
       </section>
